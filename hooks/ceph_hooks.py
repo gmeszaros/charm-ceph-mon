@@ -86,6 +86,7 @@ from charmhelpers.contrib.storage.linux.ceph import (
     CephConfContext,
     OSD_SETTING_EXCEPTIONS,
     enable_pg_autoscale,
+    configure_dashboard,
     get_osd_settings,
     send_osd_settings,
 )
@@ -191,6 +192,7 @@ def get_ceph_context():
         'ceph_public_network': public_network,
         'ceph_cluster_network': cluster_network,
         'loglevel': config('loglevel'),
+        'dashboard': str(config('enable-dashboard')).lower(),
         'dio': str(config('use-direct-io')).lower(),
     }
 
@@ -251,6 +253,8 @@ def config_changed():
         create_sysctl(sysctl_dict, '/etc/sysctl.d/50-ceph-charm.conf')
     if relations_of_type('nrpe-external-master'):
         update_nrpe_config()
+    if config('enable-dashboard') and cmp_pkgrevno('ceph', '14.2.0') >= 0:
+        apt_install(packages=filter_installed_packages(['ceph-mgr-dashboard']))
 
     if is_leader():
         if not config('no-bootstrap'):
@@ -296,6 +300,13 @@ def config_changed():
                 ceph.monitor_key_set('admin', 'autotune', 'true')
                 for pool in ceph.list_pools():
                     enable_pg_autoscale('admin', pool)
+        if (config('enable-dashboard') and
+                cmp_pkgrevno('ceph', '14.2.0') >= 0):
+            log("enable-dashboard: {}".format(str(config('enable-dashboard'))))
+            if mgr_enable_module('dashboard'):
+                pass
+            log("configure-dashboard")
+            configure_dashboard()
     # unconditionally verify that the fsid and monitor-secret are set now
     # otherwise we exit until a leader does this.
     if leader_get('fsid') is None or leader_get('monitor-secret') is None:

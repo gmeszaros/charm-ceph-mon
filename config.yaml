@@ -300,3 +300,8 @@ options:
       The charm does not segregate access to pools from different models properly,
       this means that the correct charm settings can result with client model B
       having access to the data from model A.
+  enable-dashboard:
+    type: boolean
+    default: False
+    description: |
+      Setting this option to 'true' will install and configure ceph-mgr-dashboard

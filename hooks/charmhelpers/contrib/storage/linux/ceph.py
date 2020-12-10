@@ -791,6 +791,32 @@ def enabled_manager_modules():
     return modules['enabled_modules']
 
 
+def configure_dashboard():
+    """Configure Ceph Mgr Dashboard module.
+
+    :rtype: bool
+    """
+    # SSL certificate
+    # ceph dashboard create-self-signed-cert
+    # ceph dashboard set-ssl-certificate -i dashboard.crt
+    # ceph dashboard set-ssl-certificate-key -i dashboard.key
+    # XXX use vault
+    check_call([
+        'ceph', 'dashboard', 'create-self-signed-cert'])
+
+    # manage User Accounts
+    # ceph dashboard ac-user-show
+    # ceph dashboard ac-user-create <username> <password> administrator
+    try:
+        check_call([
+            'ceph', 'dashboard', 'ac-user-create', 'admin', '@dm1nistrat0r', 'administrator'])
+    except (CalledProcessError):
+            log("Cannot create dashboard user account: {} {}"
+                .format(e.returncode, e.output))
+    # Set features, ceph dashboard feature status
+    return True
+
+
 def enable_pg_autoscale(service, pool_name):
     """Enable Ceph's PG autoscaler for the specified pool.
 
